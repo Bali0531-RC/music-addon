@@ -135,18 +135,26 @@
 
 ---
 
-### 2.4 Rich Now Playing Display ⏳ 🔧
+### 2.4 Rich Now Playing Display ✅ 🔧
 **Description:** Auto-updating embed with progress bar  
 **Config Options:**
 - `rich_nowplaying_enabled: true/false`
-- `nowplaying_update_interval: 10` (seconds)
-- `show_progress_bar: true/false`
+- `rich_nowplaying.update_interval: 10` (seconds)
+- `rich_nowplaying.show_progress_bar: true/false`
 
-**Implementation:**
-- Create updating embed
-- Show: █████████░░░░░ 01:25 / 03:40
-- Update every N seconds
-- Delete on song change
+**Implementation:** COMPLETED
+- Created `utils/richNowPlaying.js` with auto-updating embeds
+- Updates every N seconds (configurable)
+- Shows progress bar: █████████░░░░░ 01:25 / 03:40
+- Progress bar configurable via show_progress_bar setting
+- Automatically pauses updates when playback is paused
+- Shows ⏸️ Paused footer when paused
+- Resumes updates when playback resumes
+- Automatically stops and deletes embed on song change
+- Per-guild tracking of active embeds
+- Manual update method for immediate refresh
+- Time formatting (MM:SS)
+- Integrated into playNext, pause, resume, skip, stop methods
 
 ---
 

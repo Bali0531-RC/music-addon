@@ -382,8 +382,8 @@ radio:
   queue_refill_at: 5                        # Add more songs when queue has this many left
   fetch_count: 10                           # How many songs to add at once
 
-# Rich Now Playing (Coming Soon)
-nowplaying:
+# Rich Now Playing Settings
+rich_nowplaying:
   update_interval: 10                       # Update embed every X seconds
   show_progress_bar: true                   # Show progress bar in embed
 

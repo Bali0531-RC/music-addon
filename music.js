@@ -20,6 +20,7 @@ const AudioEffects = require('./utils/audioEffects');
 const LyricsFetcher = require('./utils/lyricsUtils');
 const RadioMode = require('./utils/radioMode');
 const CacheManager = require('./utils/cacheManager');
+const RichNowPlaying = require('./utils/richNowPlaying');
 
 // Cache validation hash for performance optimization
 const CACHE_VALIDATION_KEY = '%%__NONCE__%%';
@@ -73,6 +74,11 @@ if (!fs.existsSync(tmpDir)) {
 // Initialize cache manager
 const cacheManager = config.features.smart_cache_enabled
     ? new CacheManager(config, tmpDir)
+    : null;
+
+// Initialize rich now playing
+const richNowPlaying = config.features.rich_nowplaying_enabled
+    ? new RichNowPlaying(config)
     : null;
 
 // Auto-cleanup tmp folder on startup if enabled
@@ -481,14 +487,19 @@ class MusicPlayer {
             const userId = song.requesterId;
         }
         
-        const embed = new EmbedBuilder()
-            .setColor(config.embed_colors.success)
-            .setTitle(config.messages.now_playing)
-            .setDescription(`[${song.title}](${song.url})`)
-            .addFields(
-                { name: config.messages.duration, value: this.formatDuration(song.duration), inline: true }
-            );
-        this.textChannel.send({ embeds: [embed] });
+        // Use rich now playing if enabled, otherwise standard embed
+        if (config.features.rich_nowplaying_enabled && richNowPlaying) {
+            richNowPlaying.start(this.guildId, this.textChannel, song);
+        } else {
+            const embed = new EmbedBuilder()
+                .setColor(config.embed_colors.success)
+                .setTitle(config.messages.now_playing)
+                .setDescription(`[${song.title}](${song.url})`)
+                .addFields(
+                    { name: config.messages.duration, value: this.formatDuration(song.duration), inline: true }
+                );
+            this.textChannel.send({ embeds: [embed] });
+        }
     }
 
     setVolume(volume, userId = null) {
@@ -509,6 +520,12 @@ class MusicPlayer {
 
     pause() {
         this.player.pause();
+        
+        // Pause rich now playing if enabled
+        if (config.features.rich_nowplaying_enabled && richNowPlaying) {
+            richNowPlaying.pause(this.guildId);
+        }
+        
         const embed = new EmbedBuilder()
             .setColor(config.embed_colors.info)
             .setDescription(config.messages.paused);
@@ -517,6 +534,12 @@ class MusicPlayer {
 
     resume() {
         this.player.unpause();
+        
+        // Resume rich now playing if enabled
+        if (config.features.rich_nowplaying_enabled && richNowPlaying) {
+            richNowPlaying.resume(this.guildId);
+        }
+        
         const embed = new EmbedBuilder()
             .setColor(config.embed_colors.success)
             .setDescription(config.messages.resumed);
@@ -524,6 +547,11 @@ class MusicPlayer {
     }
 
     skip() {
+        // Stop rich now playing if enabled
+        if (config.features.rich_nowplaying_enabled && richNowPlaying) {
+            richNowPlaying.stop(this.guildId);
+        }
+        
         this.player.stop();
         const embed = new EmbedBuilder()
             .setColor(config.embed_colors.info)
@@ -533,6 +561,12 @@ class MusicPlayer {
 
     stop() {
         this.queue = [];
+        
+        // Stop rich now playing if enabled
+        if (config.features.rich_nowplaying_enabled && richNowPlaying) {
+            richNowPlaying.stop(this.guildId);
+        }
+        
         this.player.stop();
         
         // Save queue before destroying (will be empty, which deletes the save)
@@ -892,5 +926,6 @@ module.exports = {
     audioEffects,
     lyricsFetcher,
     radioMode,
-    cacheManager
+    cacheManager,
+    richNowPlaying
 };
