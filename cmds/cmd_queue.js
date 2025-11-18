@@ -42,16 +42,33 @@ module.exports = {
             }
 
             if (queue.length > 0) {
-                const queueList = queue.slice(0, 10).map((song, i) => 
-                    `**${i + 1}.** [${song.title}](${song.url}) - ${formatDuration(song.duration)}`
-                ).join('\n');
+                // Build queue list and check length
+                let queueList = '';
+                let displayCount = 0;
+                const maxLength = 900; // Leave room for "...and X more"
+                
+                for (let i = 0; i < Math.min(queue.length, 15); i++) {
+                    const song = queue[i];
+                    // Truncate long titles to fit within Discord limits
+                    const title = song.title.length > 60 ? song.title.substring(0, 57) + '...' : song.title;
+                    const line = `**${i + 1}.** [${title}](${song.url}) - ${formatDuration(song.duration)}\n`;
+                    
+                    // Check if adding this line would exceed the limit
+                    if (queueList.length + line.length > maxLength) {
+                        break;
+                    }
+                    
+                    queueList += line;
+                    displayCount++;
+                }
                 
                 const queueLabel = queue.length > 1 ? config.ui.song_plural : config.ui.song_singular;
-                const moreText = queue.length > 10 ? '\n*' + config.ui.and_more.replace('{count}', queue.length - 10) + '*' : '';
+                const remaining = queue.length - displayCount;
+                const moreText = remaining > 0 ? '\n*' + config.ui.and_more.replace('{count}', remaining.toString()) + '*' : '';
                 
                 embed.addFields({
                     name: `${config.ui.up_next_emoji} ${config.ui.up_next_label} (${queue.length} ${queueLabel})`,
-                    value: queueList + moreText,
+                    value: queueList.trimEnd() + moreText,
                     inline: false
                 });
             }
