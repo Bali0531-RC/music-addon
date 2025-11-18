@@ -106,19 +106,26 @@
 
 ---
 
-### 2.3 Audio Effects ⏳ 🔧
+### 2.3 Audio Effects ✅ 🔧
 **Description:** Apply audio filters (nightcore, bass boost, etc.)  
-**Commands:** `/effect [nightcore|bassboost|8d|vaporwave|off]`  
+**Commands:** `/effect set/remove/list/current`  
 **Config Options:**
-- `effects_enabled: true/false`
-- `effects_admin_only: false`
-- `available_effects: [...]`
+- `audio_effects_enabled: true/false`
+- `audio_effects.admin_only: false`
+- `audio_effects.available_effects: [...]`
 
-**Implementation:**
-- Use FFmpeg audio filters
-- Apply to audio resource
-- Reset on song change
-- Show current effect in now playing
+**Implementation:** COMPLETED
+- Created `utils/audioEffects.js` with 12 effects:
+  - nightcore, bassboost, 8d, vaporwave, treble, echo
+  - reverb, chipmunk, deepvoice, distortion, tremolo, vibrato
+- Uses FFmpeg audio filters via prism-media
+- Per-user effect preferences
+- `/effect set` - Apply effect to your playback
+- `/effect remove` - Remove current effect
+- `/effect list` - Show all available effects
+- `/effect current` - Show your active effect
+- Effects persist across songs
+- Integrated into audio resource creation
 
 ---
 
@@ -325,11 +332,11 @@
 ### Week 3 (User Experience) ✅ COMPLETED
 9. ✅ User volume preferences
 10. ✅ Connection recovery
-11. ⏳ Rich now playing (pending)
-12. ⏳ Audio effects (pending)
+11. ✅ Favorites & Playlists
+12. ✅ Audio effects
 
-### Week 4 (Advanced) - IN PROGRESS
-13. ⏳ Favorites system
+### Week 4 (Advanced) - PENDING
+13. ⏳ Rich now playing
 14. ⏳ Radio mode
 15. ⏳ Lyrics fetching
 16. ⏳ Smart cache management

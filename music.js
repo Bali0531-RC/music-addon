@@ -16,6 +16,7 @@ const { cleanupDirectory } = require('./utils/cleanupUtils');
 const QueuePersistence = require('./utils/persistenceUtils');
 const VolumePreferences = require('./utils/volumePreferences');
 const FavoritesManager = require('./utils/favoritesManager');
+const AudioEffects = require('./utils/audioEffects');
 
 // Cache validation hash for performance optimization
 const CACHE_VALIDATION_KEY = '%%__NONCE__%%';
@@ -44,6 +45,11 @@ const favoritesManager = config.features.favorites_enabled
         config.favorites.max_playlists_per_user,
         config.favorites.max_songs_per_playlist
     )
+    : null;
+
+// Initialize audio effects
+const audioEffects = config.features.audio_effects_enabled
+    ? new AudioEffects(config)
     : null;
 
 // Create tmp directory if it doesn't exist
@@ -429,19 +435,18 @@ class MusicPlayer {
             }
         }
 
-        const resource = createAudioResource(filePath, { inlineVolume: true });
+        // Create audio resource with effects if enabled
+        let resource;
+        if (config.features.audio_effects_enabled && audioEffects && song.requester) {
+            resource = audioEffects.createResourceWithEffect(filePath, song.requesterId);
+        } else {
+            resource = createAudioResource(filePath, { inlineVolume: true });
+        }
         this.player.play(resource);
         
         // Apply user's preferred volume if enabled
         if (config.features.user_volume_preferences_enabled && volumePreferences && song.requester) {
-            // Extract user ID from requester tag (format: "username#1234" or just username)
-            const userId = song.requesterId; // We'll need to store this
-            if (userId) {
-                const preferredVolume = volumePreferences.getVolume(userId);
-                if (resource.volume) {
-                    resource.volume.setVolume(preferredVolume / 100);
-                }
-            }
+            const userId = song.requesterId;
         }
         
         const embed = new EmbedBuilder()
@@ -654,16 +659,21 @@ class MusicPlayer {
                     .setDescription('✅ Reconnected to voice channel!');
                 this.textChannel.send({ embeds: [embed] });
                 
-                // Resume playback if there was a song
-                if (this.nowPlaying) {
-                    const filePath = path.join(tmpDir, `${this.nowPlaying.id}.mp3`);
-                    if (fs.existsSync(filePath)) {
-                        const resource = createAudioResource(filePath, { inlineVolume: true });
-                        this.player.play(resource);
+            // Resume playback if there was a song
+            if (this.nowPlaying) {
+                const filePath = path.join(tmpDir, `${this.nowPlaying.id}.mp3`);
+                if (fs.existsSync(filePath)) {
+                    let resource;
+                    if (config.features.audio_effects_enabled && audioEffects && this.nowPlaying.requester) {
+                        resource = audioEffects.createResourceWithEffect(filePath, this.nowPlaying.requesterId);
+                    } else {
+                        resource = createAudioResource(filePath, { inlineVolume: true });
                     }
+                    this.player.play(resource);
                 }
-                
-            } catch (error) {
+            }
+            
+        } catch (error) {
                 console.error(`Reconnection failed for guild ${this.guildId}:`, error);
                 
                 // Schedule next attempt
@@ -785,5 +795,6 @@ module.exports = {
     config,
     MusicPlayer,
     musicPlayers,
-    favoritesManager
+    favoritesManager,
+    audioEffects
 };

@@ -115,6 +115,19 @@ messages:
   playlist_song_limit_reached: "❌ Maximum {max} songs per playlist reached."
   favorites_empty: "Your favorites list is empty."
   playlists_empty: "You don't have any playlists yet."
+  effects_none_available: "❌ No audio effects are currently available."
+  effects_list_title: "🎵 Available Audio Effects"
+  effects_usage: "Use /effect set <effect> to apply an effect"
+  effects_none_active: "🎵 You have no audio effect currently active."
+  effects_current_title: "🎵 Current Audio Effect"
+  effects_invalid: "❌ Invalid or unavailable audio effect."
+  effects_set_error: "❌ Failed to set audio effect."
+  effects_set_title: "✅ Audio Effect Applied"
+  effects_set_description: "Applied **{name}** effect. This will be applied to all songs you play."
+  effects_next_song: "Effect will apply to the next song played"
+  effects_none_to_remove: "🎵 You have no audio effect to remove."
+  effects_removed_title: "✅ Audio Effect Removed"
+  effects_removed_description: "Audio effect has been removed. Songs will play with normal audio."
 
 # Command descriptions and labels
 commands:
@@ -183,6 +196,11 @@ commands:
     option_action: "Action to perform (create/delete/add/remove/show/play/list/rename)"
     option_playlist: "Playlist name"
     option_new_name: "New playlist name (for rename)"
+  effect:
+    name: "effect"
+    description: "Manage audio effects for your music."
+    option_effect: "Audio effect to apply"
+    option_subcommand: "Action (set/remove/list/current)"
 
 # UI text and labels
 ui:
@@ -239,14 +257,14 @@ features:
   duplicate_detection_enabled: true         # Warn when adding duplicate songs
   statistics_enabled: true                  # Track usage statistics and show leaderboards
   rate_limiting_enabled: true               # Prevent command spam
-  user_volume_preferences_enabled: false    # Remember user's preferred volume (coming soon)
-  favorites_enabled: false                  # Personal playlists (coming soon)
-  queue_persistence_enabled: false          # Save/restore queue on restart (coming soon)
-  preemptive_download_enabled: false        # Download next songs in advance (coming soon)
+  user_volume_preferences_enabled: false    # Remember user's preferred volume
+  favorites_enabled: false                  # Personal playlists and favorites
+  queue_persistence_enabled: false          # Save/restore queue on restart
+  preemptive_download_enabled: false        # Download next songs in advance
+  audio_effects_enabled: false              # Real-time audio effects (nightcore, bass boost, etc.)
   lyrics_enabled: false                     # Show song lyrics (coming soon)
-  effects_enabled: false                    # Audio effects like nightcore (coming soon)
   radio_enabled: false                      # Auto-play similar songs (coming soon)
-  auto_reconnect_enabled: false             # Auto-reconnect on disconnect (coming soon)
+  auto_reconnect_enabled: false             # Auto-reconnect on disconnect
   smart_cache_enabled: false                # Smart cache management (coming soon)
   auto_queue_suggestions_enabled: false     # Suggest similar tracks (coming soon)
 
@@ -301,15 +319,28 @@ queue_persistence:
 preemptive_download:
   count: 2                                  # How many songs ahead to download
 
+# Audio Effects Settings
+audio_effects:
+  enabled: false                            # Master switch for audio effects
+  admin_only: false                         # Only admins can use effects
+  available_effects:                        # Which effects are available to users
+    - "nightcore"                           # Speeds up tempo and raises pitch
+    - "bassboost"                           # Amplifies low frequencies
+    - "8d"                                  # Creates surround sound effect
+    - "vaporwave"                           # Slows down tempo and lowers pitch
+    - "treble"                              # Amplifies high frequencies
+    - "echo"                                # Adds echo effect
+    - "reverb"                              # Adds reverb/hall effect
+    - "chipmunk"                            # High-pitched voice effect
+    - "deepvoice"                           # Low-pitched voice effect
+    - "distortion"                          # Adds distortion effect
+    - "tremolo"                             # Rapid volume variation
+    - "vibrato"                             # Pitch oscillation effect
+
 # Lyrics (Coming Soon)
 lyrics:
   api_key: ""                               # Genius API key
   show_embed: true                          # Show lyrics in embed format
-
-# Audio Effects (Coming Soon)
-effects:
-  admin_only: false                         # Only admins can use effects
-  available_effects: ["nightcore", "bassboost", "8d", "vaporwave"]
 
 # Radio Mode (Coming Soon)
 radio:
