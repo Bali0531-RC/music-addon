@@ -84,6 +84,18 @@ messages:
   song_too_long: "❌ Song is too long! Maximum duration is {max} minutes."
   queue_finished: "Queue finished."
   queue_empty_add_more: "Queue is empty. Add more songs to continue playing."
+  history_title: "Recently Played Songs"
+  history_empty: "No songs in history yet."
+  seek_success: "⏩ Seeked to"
+  seek_invalid_time: "❌ Invalid time format. Use MM:SS or seconds (e.g., 1:30 or 90)"
+  seek_out_of_bounds: "❌ Time is out of bounds for this song."
+  seek_not_playing: "❌ Nothing is currently playing to seek."
+  duplicate_in_queue: "⚠️ This song is already in the queue at position #{position}"
+  duplicate_added_anyway: "Added duplicate song to queue"
+  stats_title: "📊 Music Bot Statistics"
+  stats_personal_title: "📊 Your Statistics"
+  stats_no_data: "No statistics data available yet."
+  rate_limit_exceeded: "⏱️ Slow down! You're using commands too quickly. Try again in a moment."
 
 # Command descriptions and labels
 commands:
@@ -122,6 +134,18 @@ commands:
   clear:
     name: "clear"
     description: "Clear the music queue."
+  history:
+    name: "history"
+    description: "Show recently played songs."
+    option_limit: "Number of songs to show (default: 10)"
+  seek:
+    name: "seek"
+    description: "Seek to a specific time in the current song."
+    option_time: "Time to seek to (MM:SS format or seconds, e.g., 1:30 or 90)"
+  stats:
+    name: "stats"
+    description: "Show music bot statistics."
+    option_type: "Type of stats to show (server/personal/top)"
 
 # UI text and labels
 ui:
@@ -168,3 +192,107 @@ disconnect_timeout_minutes: 5  # How long to wait in empty voice channel before 
 skip_age_restricted: true  # Automatically skip age-restricted videos instead of failing
 skip_unavailable: true  # Automatically skip unavailable videos and try next result
 max_retry_attempts: 3  # Maximum number of retry attempts for failed downloads
+
+# ===========================================================================
+# Feature Flags - Enable/Disable Features
+# ===========================================================================
+features:
+  seek_enabled: true                        # Allow users to seek to specific time in song
+  history_enabled: true                     # Track and display recently played songs
+  duplicate_detection_enabled: true         # Warn when adding duplicate songs
+  statistics_enabled: true                  # Track usage statistics and show leaderboards
+  rate_limiting_enabled: true               # Prevent command spam
+  user_volume_preferences_enabled: false    # Remember user's preferred volume (coming soon)
+  favorites_enabled: false                  # Personal playlists (coming soon)
+  queue_persistence_enabled: false          # Save/restore queue on restart (coming soon)
+  preemptive_download_enabled: false        # Download next songs in advance (coming soon)
+  lyrics_enabled: false                     # Show song lyrics (coming soon)
+  effects_enabled: false                    # Audio effects like nightcore (coming soon)
+  radio_enabled: false                      # Auto-play similar songs (coming soon)
+  auto_reconnect_enabled: false             # Auto-reconnect on disconnect (coming soon)
+  smart_cache_enabled: false                # Smart cache management (coming soon)
+  auto_queue_suggestions_enabled: false     # Suggest similar tracks (coming soon)
+
+# ===========================================================================
+# Feature-Specific Settings
+# ===========================================================================
+
+# Seek Command Settings
+seek:
+  admin_only: false                         # Only admins can use seek command
+
+# History Tracking Settings
+history:
+  max_entries: 50                           # Maximum number of songs to keep in history
+  show_requester: true                      # Show who requested each song in history
+
+# Duplicate Detection Settings
+duplicate_detection:
+  allow_duplicates: false                   # Allow same song multiple times in queue
+  warning_only: true                        # Just warn, don't block duplicate (if allow_duplicates: true)
+
+# Statistics Settings
+statistics:
+  track_plays: true                         # Track song play counts
+  track_users: true                         # Track user activity
+  leaderboard_size: 10                      # Number of entries in leaderboards
+  data_file: "data/statistics.json"         # Statistics storage file
+
+# Rate Limiting Settings
+rate_limiting:
+  commands_per_minute: 10                   # Max commands per user per minute
+  play_per_minute: 5                        # Max play commands per user per minute
+  exempt_roles: []                          # Roles exempt from rate limiting
+
+# User Volume Preferences (Coming Soon)
+user_volume:
+  default: 50                               # Default volume for new users
+
+# Favorites System (Coming Soon)
+favorites:
+  max_playlists_per_user: 10                # Max playlists per user
+  max_songs_per_playlist: 100               # Max songs per playlist
+  data_file: "data/favorites.json"          # Favorites storage file
+
+# Queue Persistence (Coming Soon)
+queue_persistence:
+  file: "data/queues.json"                  # Queue storage file
+  auto_restore_on_restart: true             # Automatically restore queues on bot start
+
+# Preemptive Download (Coming Soon)
+preemptive_download:
+  count: 2                                  # How many songs ahead to download
+
+# Lyrics (Coming Soon)
+lyrics:
+  api_key: ""                               # Genius API key
+  show_embed: true                          # Show lyrics in embed format
+
+# Audio Effects (Coming Soon)
+effects:
+  admin_only: false                         # Only admins can use effects
+  available_effects: ["nightcore", "bassboost", "8d", "vaporwave"]
+
+# Radio Mode (Coming Soon)
+radio:
+  queue_refill_at: 5                        # Add more songs when queue has this many left
+  fetch_count: 10                           # How many songs to add at once
+
+# Rich Now Playing (Coming Soon)
+nowplaying:
+  update_interval: 10                       # Update embed every X seconds
+  show_progress_bar: true                   # Show progress bar in embed
+
+# Auto Reconnect (Coming Soon)
+auto_reconnect:
+  attempts: 3                               # How many times to try reconnecting
+  delay_seconds: 5                          # Delay between reconnection attempts
+
+# Smart Cache (Coming Soon)
+smart_cache:
+  popular_threshold: 3                      # Keep songs played X times or more
+  max_size_mb: 1000                         # Maximum cache size
+
+# Audio Quality (Coming Soon)
+audio_quality: "high"                       # Options: high, medium, low
+max_bitrate_kbps: 320                       # Maximum audio bitrate

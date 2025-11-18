@@ -2,6 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, Butt
 const { getMusicPlayer, searchYouTube, config } = require('../music');
 const { isBlacklisted, checkVoiceChannel } = require('../utils/musicUtils');
 const { isSpotifyUrl } = require('../utils/spotifyUtils');
+const { checkRateLimit } = require('../utils/rateLimitUtils');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -13,6 +14,19 @@ module.exports = {
             .setRequired(true)),
     async execute(interaction) {
         await interaction.deferReply();
+
+        // Check rate limiting
+        const rateLimitCheck = checkRateLimit(
+            interaction.user.id, 
+            'play',
+            interaction.member.roles.cache.map(r => r.id)
+        );
+        if (!rateLimitCheck.allowed) {
+            const embed = new EmbedBuilder()
+                .setColor(config.embed_colors.warning)
+                .setDescription(rateLimitCheck.reason);
+            return interaction.editReply({ embeds: [embed] });
+        }
 
         const blacklistCheck = isBlacklisted(interaction.member);
         if (blacklistCheck.blacklisted) {
@@ -36,7 +50,7 @@ module.exports = {
         // If it's a Spotify URL, handle it directly
         if (isSpotifyUrl(query)) {
             const player = getMusicPlayer(interaction, true);
-            await player.play(query);
+            await player.play(query, 0, interaction.user.tag);
             const embed = new EmbedBuilder()
                 .setColor(config.embed_colors.success)
                 .setDescription(config.ui.processing_spotify);
@@ -46,7 +60,7 @@ module.exports = {
         // If it's a YouTube URL, play directly
         if (isUrl) {
             const player = getMusicPlayer(interaction, true);
-            await player.play(query);
+            await player.play(query, 0, interaction.user.tag);
             const embed = new EmbedBuilder()
                 .setColor(config.embed_colors.success)
                 .setDescription(config.ui.processing_song);
@@ -128,7 +142,7 @@ module.exports = {
             await buttonInteraction.deferUpdate();
 
             const player = getMusicPlayer(interaction, true);
-            await player.play(selectedSong.url);
+            await player.play(selectedSong.url, 0, interaction.user.tag);
 
             const embed = new EmbedBuilder()
                 .setColor(config.embed_colors.success)

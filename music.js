@@ -46,12 +46,25 @@ class MusicPlayer {
         this.queue = [];
         this.loop = false;
         this.nowPlaying = null;
+        this.history = [];  // Track played songs
+        this.playCount = {};  // Track how many times each song has been played
 
         this.player.on(AudioPlayerStatus.Idle, () => {
             const oldSong = this.nowPlaying;
             if (this.loop && oldSong) {
                 this.queue.unshift(oldSong);
             }
+            
+            // Add to history if enabled
+            if (oldSong && config.features.history_enabled) {
+                this.addToHistory(oldSong);
+            }
+            
+            // Track play count if statistics enabled
+            if (oldSong && config.features.statistics_enabled) {
+                this.playCount[oldSong.id] = (this.playCount[oldSong.id] || 0) + 1;
+            }
+            
             this.nowPlaying = null;
             this.playNext();
 
@@ -70,7 +83,12 @@ class MusicPlayer {
         });
     }
 
-    async play(query, retryCount = 0) {
+    async play(query, retryCount = 0, requester = null) {
+        // Store requester info if provided
+        if (requester) {
+            this.lastRequester = requester;
+        }
+        
         // Check if it's a Spotify URL
         if (isSpotifyUrl(query)) {
             return await this.playSpotify(query);
@@ -198,7 +216,29 @@ class MusicPlayer {
             url: videoDetails.webpage_url,
             id: videoDetails.id,
             duration: videoDetails.duration,
+            requester: this.lastRequester || 'Unknown',  // Store who requested it
         };
+
+        // Check for duplicates if enabled
+        if (config.features.duplicate_detection_enabled && !config.duplicate_detection.allow_duplicates) {
+            const duplicateIndex = this.queue.findIndex(s => s.id === song.id);
+            if (duplicateIndex !== -1) {
+                const message = config.messages.duplicate_in_queue.replace('{position}', duplicateIndex + 1);
+                if (config.duplicate_detection.warning_only) {
+                    // Just warn but still add
+                    const embed = new EmbedBuilder()
+                        .setColor(config.embed_colors.warning)
+                        .setDescription(message + `\\n${config.messages.duplicate_added_anyway}`);
+                    this.textChannel.send({ embeds: [embed] });
+                } else {
+                    // Block duplicate
+                    const embed = new EmbedBuilder()
+                        .setColor(config.embed_colors.warning)
+                        .setDescription(message);
+                    return this.textChannel.send({ embeds: [embed] });
+                }
+            }
+        }
 
         this.queue.push(song);
         if (!this.nowPlaying) {
@@ -308,6 +348,11 @@ class MusicPlayer {
                     output: filePath,
                     noCheckCertificate: true,
                 });
+            } else {
+                // File exists in cache, update access time for cleanup management
+                const now = new Date();
+                fs.utimesSync(filePath, now, now);
+                console.log(`Using cached file for ${song.id}`);
             }
         } catch (error) {
             console.error(config.console.download_error, error);
@@ -432,6 +477,35 @@ class MusicPlayer {
             .setColor(config.embed_colors.success)
             .setDescription(config.messages.queue_cleared);
         this.textChannel.send({ embeds: [embed] });
+    }
+
+    addToHistory(song) {
+        if (!config.features.history_enabled) return;
+        
+        const historyEntry = {
+            title: song.title,
+            url: song.url,
+            id: song.id,
+            duration: song.duration,
+            requester: song.requester || 'Unknown',
+            playedAt: new Date().toISOString(),
+        };
+        
+        // Add to beginning of history
+        this.history.unshift(historyEntry);
+        
+        // Limit history size
+        if (this.history.length > config.history.max_entries) {
+            this.history = this.history.slice(0, config.history.max_entries);
+        }
+    }
+
+    getHistory(limit = 10) {
+        return this.history.slice(0, limit);
+    }
+
+    getPlayCount(videoId) {
+        return this.playCount[videoId] || 0;
     }
 
     formatDuration(seconds) {
