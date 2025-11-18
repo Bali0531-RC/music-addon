@@ -197,7 +197,7 @@ commands:
     description: "Seek to a specific time in the current song."
     option_time: "Time to seek to (MM:SS format or seconds, e.g., 1:30 or 90)"
   stats:
-    name: "stats"
+    name: "musicstats"
     description: "Show music bot statistics."
     option_type: "Type of stats to show (server/personal/top)"
   savequeue:

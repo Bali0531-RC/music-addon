@@ -2,6 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { getMusicPlayer, config, musicPlayers } = require('../music');
 const { isBlacklisted } = require('../utils/musicUtils');
 
+// Command: /musicstats - Show music bot statistics
 module.exports = {
     data: new SlashCommandBuilder()
         .setName(config.commands.stats.name)
