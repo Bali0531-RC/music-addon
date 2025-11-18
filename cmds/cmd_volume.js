@@ -31,8 +31,14 @@ module.exports = {
         if (player) {
             const volume = interaction.options.getInteger('level');
             if (volume >= 0 && volume <= 100) {
-                player.setVolume(volume);
-                await interaction.reply({ content: config.ui.success_emoji, ephemeral: true });
+                player.setVolume(volume, interaction.user.id);
+                
+                let message = config.ui.success_emoji;
+                if (config.features.user_volume_preferences_enabled) {
+                    message += ' Volume preference saved!';
+                }
+                
+                await interaction.reply({ content: message, ephemeral: true });
             } else {
                 const embed = new EmbedBuilder()
                     .setColor(config.embed_colors.error)

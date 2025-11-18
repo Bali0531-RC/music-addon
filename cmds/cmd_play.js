@@ -50,7 +50,7 @@ module.exports = {
         // If it's a Spotify URL, handle it directly
         if (isSpotifyUrl(query)) {
             const player = getMusicPlayer(interaction, true);
-            await player.play(query, 0, interaction.user.tag);
+            await player.play(query, 0, interaction.user.tag, interaction.user.id);
             const embed = new EmbedBuilder()
                 .setColor(config.embed_colors.success)
                 .setDescription(config.ui.processing_spotify);
@@ -60,7 +60,7 @@ module.exports = {
         // If it's a YouTube URL, play directly
         if (isUrl) {
             const player = getMusicPlayer(interaction, true);
-            await player.play(query, 0, interaction.user.tag);
+            await player.play(query, 0, interaction.user.tag, interaction.user.id);
             const embed = new EmbedBuilder()
                 .setColor(config.embed_colors.success)
                 .setDescription(config.ui.processing_song);
@@ -142,7 +142,7 @@ module.exports = {
             await buttonInteraction.deferUpdate();
 
             const player = getMusicPlayer(interaction, true);
-            await player.play(selectedSong.url, 0, interaction.user.tag);
+            await player.play(selectedSong.url, 0, interaction.user.tag, interaction.user.id);
 
             const embed = new EmbedBuilder()
                 .setColor(config.embed_colors.success)

@@ -96,6 +96,10 @@ messages:
   stats_personal_title: "📊 Your Statistics"
   stats_no_data: "No statistics data available yet."
   rate_limit_exceeded: "⏱️ Slow down! You're using commands too quickly. Try again in a moment."
+  queue_saved: "💾 Queue saved successfully!"
+  queue_restored: "✅ Queue restored! {count} songs loaded."
+  queue_no_save: "❌ No saved queue found for this server."
+  queue_restore_failed: "❌ Failed to restore queue."
 
 # Command descriptions and labels
 commands:
@@ -146,6 +150,12 @@ commands:
     name: "stats"
     description: "Show music bot statistics."
     option_type: "Type of stats to show (server/personal/top)"
+  savequeue:
+    name: "savequeue"
+    description: "Manually save the current queue (auto-saves by default)."
+  restorequeue:
+    name: "restorequeue"
+    description: "Restore a previously saved queue."
 
 # UI text and labels
 ui:
@@ -247,6 +257,7 @@ rate_limiting:
 # User Volume Preferences (Coming Soon)
 user_volume:
   default: 50                               # Default volume for new users
+  data_file: "data/volume_prefs.json"       # Volume preferences storage file
 
 # Favorites System (Coming Soon)
 favorites:

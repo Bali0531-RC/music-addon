@@ -13,6 +13,8 @@ const path = require('path');
 const yaml = require('js-yaml');
 const { isSpotifyUrl, processSpotifyUrl } = require('./utils/spotifyUtils');
 const { cleanupDirectory } = require('./utils/cleanupUtils');
+const QueuePersistence = require('./utils/persistenceUtils');
+const VolumePreferences = require('./utils/volumePreferences');
 
 // Cache validation hash for performance optimization
 const CACHE_VALIDATION_KEY = '%%__NONCE__%%';
@@ -20,6 +22,19 @@ const SESSION_IDENTIFIER = '%%__USER__%%';
 
 const config = yaml.load(fs.readFileSync(path.join(__dirname, 'config.yml'), 'utf8'));
 const tmpDir = path.join(__dirname, config.tmp_folder);
+
+// Initialize queue persistence
+const queuePersistence = config.features.queue_persistence_enabled 
+    ? new QueuePersistence(path.join(__dirname, config.queue_persistence.file))
+    : null;
+
+// Initialize volume preferences
+const volumePreferences = config.features.user_volume_preferences_enabled
+    ? new VolumePreferences(
+        path.join(__dirname, config.user_volume.data_file),
+        config.user_volume.default
+    )
+    : null;
 
 // Create tmp directory if it doesn't exist
 if (!fs.existsSync(tmpDir)) {
@@ -48,6 +63,7 @@ class MusicPlayer {
         this.nowPlaying = null;
         this.history = [];  // Track played songs
         this.playCount = {};  // Track how many times each song has been played
+        this.reconnectAttempts = 0;
 
         this.player.on(AudioPlayerStatus.Idle, () => {
             const oldSong = this.nowPlaying;
@@ -83,10 +99,11 @@ class MusicPlayer {
         });
     }
 
-    async play(query, retryCount = 0, requester = null) {
+    async play(query, retryCount = 0, requester = null, requesterId = null) {
         // Store requester info if provided
         if (requester) {
             this.lastRequester = requester;
+            this.lastRequesterId = requesterId;
         }
         
         // Check if it's a Spotify URL
@@ -216,7 +233,8 @@ class MusicPlayer {
             url: videoDetails.webpage_url,
             id: videoDetails.id,
             duration: videoDetails.duration,
-            requester: this.lastRequester || 'Unknown',  // Store who requested it
+            requester: this.lastRequester || 'Unknown',
+            requesterId: this.lastRequesterId || null,
         };
 
         // Check for duplicates if enabled
@@ -241,6 +259,10 @@ class MusicPlayer {
         }
 
         this.queue.push(song);
+        
+        // Save queue after adding song
+        this.saveQueue();
+        
         if (!this.nowPlaying) {
             this.playNext();
         } else {
@@ -354,6 +376,12 @@ class MusicPlayer {
                 fs.utimesSync(filePath, now, now);
                 console.log(`Using cached file for ${song.id}`);
             }
+            
+            // Start preemptive download of next songs if enabled
+            if (config.features.preemptive_download_enabled) {
+                this.startPreemptiveDownloads();
+            }
+            
         } catch (error) {
             console.error(config.console.download_error, error);
             
@@ -384,10 +412,27 @@ class MusicPlayer {
                 adapterCreator: this.voiceChannel.guild.voiceAdapterCreator,
             });
             this.connection.subscribe(this.player);
+            
+            // Setup connection recovery if enabled
+            if (config.features.auto_reconnect_enabled) {
+                this.setupConnectionRecovery();
+            }
         }
 
         const resource = createAudioResource(filePath, { inlineVolume: true });
         this.player.play(resource);
+        
+        // Apply user's preferred volume if enabled
+        if (config.features.user_volume_preferences_enabled && volumePreferences && song.requester) {
+            // Extract user ID from requester tag (format: "username#1234" or just username)
+            const userId = song.requesterId; // We'll need to store this
+            if (userId) {
+                const preferredVolume = volumePreferences.getVolume(userId);
+                if (resource.volume) {
+                    resource.volume.setVolume(preferredVolume / 100);
+                }
+            }
+        }
         
         const embed = new EmbedBuilder()
             .setColor(config.embed_colors.success)
@@ -399,9 +444,15 @@ class MusicPlayer {
         this.textChannel.send({ embeds: [embed] });
     }
 
-    setVolume(volume) {
+    setVolume(volume, userId = null) {
         if (this.player.state.resource) {
             this.player.state.resource.volume.setVolume(volume / 100);
+            
+            // Save user preference if enabled
+            if (userId && config.features.user_volume_preferences_enabled && volumePreferences) {
+                volumePreferences.setVolume(userId, volume);
+            }
+            
             const embed = new EmbedBuilder()
                 .setColor(config.embed_colors.success)
                 .setDescription(`${config.messages.volume_changed} **${volume}%**`);
@@ -436,6 +487,12 @@ class MusicPlayer {
     stop() {
         this.queue = [];
         this.player.stop();
+        
+        // Save queue before destroying (will be empty, which deletes the save)
+        if (config.features.queue_persistence_enabled) {
+            queuePersistence.deleteQueue(this.guildId);
+        }
+        
         this.connection.destroy();
         musicPlayers.delete(this.guildId);
         const embed = new EmbedBuilder()
@@ -449,6 +506,10 @@ class MusicPlayer {
             const j = Math.floor(Math.random() * (i + 1));
             [this.queue[i], this.queue[j]] = [this.queue[j], this.queue[i]];
         }
+        
+        // Save queue after shuffle
+        this.saveQueue();
+        
         const embed = new EmbedBuilder()
             .setColor(config.embed_colors.success)
             .setDescription(config.messages.shuffled);
@@ -506,6 +567,142 @@ class MusicPlayer {
 
     getPlayCount(videoId) {
         return this.playCount[videoId] || 0;
+    }
+
+    async startPreemptiveDownloads() {
+        if (!config.features.preemptive_download_enabled) return;
+        
+        const count = Math.min(config.preemptive_download.count, this.queue.length);
+        
+        for (let i = 0; i < count; i++) {
+            const song = this.queue[i];
+            if (!song) continue;
+            
+            const filePath = path.join(tmpDir, `${song.id}.mp3`);
+            
+            // Skip if already exists or currently downloading
+            if (fs.existsSync(filePath)) continue;
+            if (this.downloadingSet && this.downloadingSet.has(song.id)) continue;
+            
+            // Track that we're downloading this
+            if (!this.downloadingSet) {
+                this.downloadingSet = new Set();
+            }
+            this.downloadingSet.add(song.id);
+            
+            // Download in background (don't await)
+            ytdl.exec(song.url, {
+                extractAudio: true,
+                audioFormat: 'mp3',
+                output: filePath,
+                noCheckCertificate: true,
+            }).then(() => {
+                console.log(`Preemptively downloaded: ${song.title}`);
+                this.downloadingSet.delete(song.id);
+            }).catch((error) => {
+                console.error(`Preemptive download failed for ${song.title}:`, error.message);
+                this.downloadingSet.delete(song.id);
+            });
+        }
+    }
+
+    setupConnectionRecovery() {
+        if (!this.connection) return;
+        
+        this.connection.on(VoiceConnectionStatus.Disconnected, async () => {
+            console.log(`Voice connection disconnected for guild ${this.guildId}`);
+            
+            if (this.reconnectAttempts >= config.auto_reconnect.attempts) {
+                console.log(`Max reconnect attempts reached for guild ${this.guildId}`);
+                const embed = new EmbedBuilder()
+                    .setColor(config.embed_colors.error)
+                    .setDescription('❌ Lost connection to voice channel. Max reconnection attempts reached.');
+                this.textChannel.send({ embeds: [embed] });
+                
+                this.stop();
+                return;
+            }
+            
+            this.reconnectAttempts++;
+            console.log(`Attempting to reconnect (${this.reconnectAttempts}/${config.auto_reconnect.attempts})...`);
+            
+            try {
+                await entersState(this.connection, VoiceConnectionStatus.Disconnected, config.auto_reconnect.delay_seconds * 1000);
+                
+                // Try to reconnect
+                this.connection.rejoin({
+                    channelId: this.voiceChannel.id,
+                    selfDeaf: true,
+                    selfMute: false,
+                });
+                
+                console.log(`Reconnected successfully for guild ${this.guildId}`);
+                this.reconnectAttempts = 0;
+                
+                const embed = new EmbedBuilder()
+                    .setColor(config.embed_colors.success)
+                    .setDescription('✅ Reconnected to voice channel!');
+                this.textChannel.send({ embeds: [embed] });
+                
+                // Resume playback if there was a song
+                if (this.nowPlaying) {
+                    const filePath = path.join(tmpDir, `${this.nowPlaying.id}.mp3`);
+                    if (fs.existsSync(filePath)) {
+                        const resource = createAudioResource(filePath, { inlineVolume: true });
+                        this.player.play(resource);
+                    }
+                }
+                
+            } catch (error) {
+                console.error(`Reconnection failed for guild ${this.guildId}:`, error);
+                
+                // Schedule next attempt
+                if (this.reconnectAttempts < config.auto_reconnect.attempts) {
+                    setTimeout(() => {
+                        this.setupConnectionRecovery();
+                    }, config.auto_reconnect.delay_seconds * 1000);
+                } else {
+                    const embed = new EmbedBuilder()
+                        .setColor(config.embed_colors.error)
+                        .setDescription('❌ Unable to reconnect to voice channel.');
+                    this.textChannel.send({ embeds: [embed] });
+                    this.stop();
+                }
+            }
+        });
+        
+        this.connection.on(VoiceConnectionStatus.Destroyed, () => {
+            console.log(`Voice connection destroyed for guild ${this.guildId}`);
+            this.reconnectAttempts = 0;
+        });
+    }
+
+    saveQueue() {
+        if (!config.features.queue_persistence_enabled || !queuePersistence) return false;
+        
+        const state = {
+            queue: this.queue,
+            nowPlaying: this.nowPlaying,
+            loop: this.loop,
+            voiceChannelId: this.voiceChannel.id,
+            textChannelId: this.textChannel.id,
+            history: this.history,
+            playCount: this.playCount
+        };
+        
+        return queuePersistence.saveQueue(this.guildId, state);
+    }
+
+    static restoreQueue(guildId, client) {
+        if (!config.features.queue_persistence_enabled || !queuePersistence) return null;
+        
+        const state = queuePersistence.loadQueue(guildId);
+        if (!state) return null;
+        
+        // Delete the saved state after loading
+        queuePersistence.deleteQueue(guildId);
+        
+        return state;
     }
 
     formatDuration(seconds) {
@@ -575,5 +772,7 @@ function getMusicPlayer(interaction, createIfNotExist = false) {
 module.exports = {
     getMusicPlayer,
     searchYouTube,
-    config
+    config,
+    MusicPlayer,
+    musicPlayers
 };
