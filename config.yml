@@ -1,0 +1,164 @@
+# ===========================================================================
+# MusicAddon Configuration
+# If you have any suggestions or issues with this addon, please contact me on Discord.
+# Addon creator: bali0531
+# ===========================================================================
+
+# Main MusicAddon settings
+MusicBot:
+  Enabled: true
+  
+  # Whitelist settings (if enabled, only whitelisted users/roles can use the bot)
+  # Leave arrays empty to disable whitelist
+  WhitelistEnabled: false
+  WhitelistedUsers: []  # Example: ["123456789012345678", "987654321098765432"]
+  WhitelistedRoles: []  # Example: ["123456789012345678", "987654321098765432"]
+  
+  # Blacklist settings (users/roles that cannot use the bot)
+  # Blacklist is checked even if whitelist is disabled
+  BlacklistedUsers: []  # Example: ["123456789012345678"]
+  BlacklistedRoles: []  # Example: ["123456789012345678"]
+
+# Spotify API credentials
+# Get your credentials from: https://developer.spotify.com/dashboard
+spotify:
+  client_id: "YOUR_SPOTIFY_CLIENT_ID"
+  client_secret: "YOUR_SPOTIFY_CLIENT_SECRET"
+
+# Embed colors (hex format)
+embed_colors:
+  success: "#00FF00"
+  error: "#FF0000"
+  info: "#0099FF"
+  warning: "#FFA500"
+
+# All user-facing messages
+messages:
+  no_voice_channel: "You need to be in a voice channel to play music!"
+  no_permission_join: "I don't have permission to join your voice channel."
+  no_permission_speak: "I don't have permission to speak in your voice channel."
+  now_playing: "Now Playing"
+  queued: "Added to Queue"
+  downloading: "Downloading"
+  download_failed: "Failed to download the song. Please try again later."
+  file_too_large: "The requested song is too large to download."
+  invalid_url: "Please provide a valid YouTube URL or search query."
+  queue_cleared: "Queue has been cleared."
+  loop_enabled: "Loop mode enabled."
+  loop_disabled: "Loop mode disabled."
+  now_playing_empty: "Nothing is currently playing."
+  paused: "Music paused."
+  resumed: "Music resumed."
+  shuffled: "Queue shuffled."
+  skipped: "Skipped current song."
+  stopped: "Stopped playback and left voice channel."
+  volume_changed: "Volume set to"
+  searching: "Searching YouTube..."
+  search_results: "Search Results"
+  search_select: "Select a song to play (1-7):"
+  search_cancelled: "Search cancelled."
+  search_timeout: "Search timed out. Please try again."
+  search_no_results: "No results found for your query."
+  queue_empty: "Queue is empty."
+  duration: "Duration"
+  position_in_queue: "Position in Queue"
+  requested_by: "Requested by"
+  spotify_processing: "Processing Spotify"
+  spotify_track_added: "Added Spotify track to queue"
+  spotify_playlist_added: "Added Spotify playlist to queue"
+  spotify_album_added: "Added Spotify album to queue"
+  spotify_error: "Failed to process Spotify link. Please check the URL and try again."
+  spotify_not_configured: "Spotify is not configured. Please add your API credentials to config.yml"
+  not_whitelisted: "You are not whitelisted to use music commands."
+  role_not_whitelisted: "Your role is not whitelisted to use music commands."
+  age_restricted: "⚠️ This video is age-restricted and cannot be played. Try a different version."
+  video_unavailable: "⚠️ This video is unavailable or private. Skipping..."
+  no_results_found: "❌ No playable results found for this query."
+  queue_full: "❌ Queue is full! Maximum queue size is {max} songs."
+  song_too_long: "❌ Song is too long! Maximum duration is {max} minutes."
+  queue_finished: "Queue finished."
+  queue_empty_add_more: "Queue is empty. Add more songs to continue playing."
+
+# Command descriptions and labels
+commands:
+  play:
+    name: "play"
+    description: "Play a song from YouTube or Spotify."
+    option_query: "YouTube/Spotify URL or search query"
+  pause:
+    name: "pause"
+    description: "Pauses the current song."
+  resume:
+    name: "resume"
+    description: "Resumes the current song."
+  skip:
+    name: "skip"
+    description: "Skips the current song."
+  stop:
+    name: "stop"
+    description: "Stops the music and clears the queue."
+  queue:
+    name: "queue"
+    description: "Shows the current music queue."
+  nowplaying:
+    name: "nowplaying"
+    description: "Shows the currently playing song."
+  volume:
+    name: "volume"
+    description: "Sets the music volume."
+    option_level: "The volume level (0-100)."
+  loop:
+    name: "loop"
+    description: "Toggle loop for the current song."
+  shuffle:
+    name: "shuffle"
+    description: "Shuffles the music queue."
+  clear:
+    name: "clear"
+    description: "Clear the music queue."
+
+# UI text and labels
+ui:
+  processing_spotify: "✅ Processing Spotify link..."
+  processing_song: "✅ Processing your song..."
+  selected_song: "✅ Selected:"
+  queue_title: "Music Queue"
+  now_playing_emoji: "🎵"
+  up_next_emoji: "📋"
+  up_next_label: "Up Next"
+  and_more: "...and {count} more"
+  song_plural: "songs"
+  song_singular: "song"
+  success_emoji: "✅"
+  user_emoji: "👤"
+  time_emoji: "⏱️"
+  button_cancel: "Cancel"
+  volume_range_error: "Volume must be between 0 and 100."
+
+# Console messages (for logging)
+console:
+  cleanup_startup: "🧹 Cleaned up {count} file(s) from {folder} on startup"
+  deleted_file: "Deleted {file}"
+  age_restricted_retry: "Age-restricted video detected, trying next result (attempt {attempt})"
+  age_restricted_alternative: "Age-restricted, trying alternative (attempt {attempt})"
+  video_unavailable_retry: "Video unavailable, trying next result (attempt {attempt})"
+  spotify_auth_success: "Spotify authentication successful"
+  directory_not_exist: "Directory {path} does not exist, skipping cleanup"
+  download_error: "Download error:"
+  search_error: "Search error:"
+  video_fetch_error: "Video fetch error:"
+
+# Bot behavior settings
+max_file_size_mb: 500
+post_play_delete_delay_minutes: 5
+tmp_folder: ".tmp"
+search_results_count: 7
+search_timeout_seconds: 60
+auto_cleanup_tmp_on_start: true  # Automatically delete all files in tmp folder on bot start
+max_queue_size: 100  # Maximum number of songs in queue (0 = unlimited)
+max_song_duration_minutes: 30  # Maximum song duration in minutes (0 = unlimited)
+disconnect_on_empty_queue: true  # Disconnect from voice channel when queue is empty
+disconnect_timeout_minutes: 5  # How long to wait in empty voice channel before disconnecting
+skip_age_restricted: true  # Automatically skip age-restricted videos instead of failing
+skip_unavailable: true  # Automatically skip unavailable videos and try next result
+max_retry_attempts: 3  # Maximum number of retry attempts for failed downloads
