@@ -15,6 +15,7 @@ const { isSpotifyUrl, processSpotifyUrl } = require('./utils/spotifyUtils');
 const { cleanupDirectory } = require('./utils/cleanupUtils');
 const QueuePersistence = require('./utils/persistenceUtils');
 const VolumePreferences = require('./utils/volumePreferences');
+const FavoritesManager = require('./utils/favoritesManager');
 
 // Cache validation hash for performance optimization
 const CACHE_VALIDATION_KEY = '%%__NONCE__%%';
@@ -33,6 +34,15 @@ const volumePreferences = config.features.user_volume_preferences_enabled
     ? new VolumePreferences(
         path.join(__dirname, config.user_volume.data_file),
         config.user_volume.default
+    )
+    : null;
+
+// Initialize favorites manager
+const favoritesManager = config.features.favorites_enabled
+    ? new FavoritesManager(
+        path.join(__dirname, config.favorites.data_file),
+        config.favorites.max_playlists_per_user,
+        config.favorites.max_songs_per_playlist
     )
     : null;
 
@@ -774,5 +784,6 @@ module.exports = {
     searchYouTube,
     config,
     MusicPlayer,
-    musicPlayers
+    musicPlayers,
+    favoritesManager
 };

@@ -100,6 +100,21 @@ messages:
   queue_restored: "✅ Queue restored! {count} songs loaded."
   queue_no_save: "❌ No saved queue found for this server."
   queue_restore_failed: "❌ Failed to restore queue."
+  favorite_added: "⭐ Added to favorites!"
+  favorite_removed: "❌ Removed from favorites."
+  favorite_already_exists: "⚠️ Already in favorites."
+  favorite_not_found: "❌ Not found in favorites."
+  playlist_created: "✅ Playlist '{name}' created!"
+  playlist_deleted: "🗑️ Playlist '{name}' deleted."
+  playlist_not_found: "❌ Playlist not found."
+  playlist_already_exists: "⚠️ Playlist already exists."
+  playlist_song_added: "➕ Added to playlist '{name}'!"
+  playlist_song_removed: "➖ Removed from playlist '{name}'."
+  playlist_song_already_exists: "⚠️ Already in this playlist."
+  playlist_limit_reached: "❌ Maximum {max} playlists reached."
+  playlist_song_limit_reached: "❌ Maximum {max} songs per playlist reached."
+  favorites_empty: "Your favorites list is empty."
+  playlists_empty: "You don't have any playlists yet."
 
 # Command descriptions and labels
 commands:
@@ -156,6 +171,18 @@ commands:
   restorequeue:
     name: "restorequeue"
     description: "Restore a previously saved queue."
+  favorite:
+    name: "favorite"
+    description: "Add current song to your favorites."
+  favorites:
+    name: "favorites"
+    description: "Show your favorite songs."
+  playlist:
+    name: "playlist"
+    description: "Manage your playlists."
+    option_action: "Action to perform (create/delete/add/remove/show/play/list/rename)"
+    option_playlist: "Playlist name"
+    option_new_name: "New playlist name (for rename)"
 
 # UI text and labels
 ui:
