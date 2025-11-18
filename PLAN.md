@@ -90,19 +90,25 @@
 
 ---
 
-### 2.2 Lyrics Fetching ⏳ 🔧
+### 2.2 Lyrics Fetching ✅ 🔧
 **Description:** Display song lyrics  
 **Commands:** `/lyrics [query]`  
 **Config Options:**
 - `lyrics_enabled: true/false`
 - `lyrics_api_key: ""` (Genius API)
 - `lyrics_show_embed: true/false`
+- `lyrics_cache_results: true/false`
 
-**Implementation:**
-- Integrate Genius API
-- Search by current song title/artist
-- Display in paginated embeds
-- Fallback to web search if API fails
+**Implementation:** COMPLETED
+- Created `utils/lyricsUtils.js` with Genius API integration
+- `/lyrics` - Get lyrics for current song
+- `/lyrics <query>` - Search for specific song lyrics
+- Auto-parse song title and artist from YouTube titles
+- Returns song info, artist, release date, and Genius link
+- Cached results to reduce API calls
+- Handles various title formats (Artist - Song, Song by Artist, etc.)
+- Clean removal of common suffixes (official video, lyrics, etc.)
+- Note: Genius API provides metadata only; full lyrics on Genius website
 
 ---
 
@@ -335,11 +341,11 @@
 11. ✅ Favorites & Playlists
 12. ✅ Audio effects
 
-### Week 4 (Advanced) - PENDING
-13. ⏳ Rich now playing
-14. ⏳ Radio mode
-15. ⏳ Lyrics fetching
-16. ⏳ Smart cache management
+### Week 4 (Advanced) - IN PROGRESS
+13. ✅ Lyrics fetching
+14. ⏳ Rich now playing (pending)
+15. ⏳ Radio mode (pending)
+16. ⏳ Smart cache management (pending)
 
 ---
 

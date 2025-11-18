@@ -128,6 +128,11 @@ messages:
   effects_none_to_remove: "🎵 You have no audio effect to remove."
   effects_removed_title: "✅ Audio Effect Removed"
   effects_removed_description: "Audio effect has been removed. Songs will play with normal audio."
+  lyrics_not_configured: "❌ Lyrics feature is not configured. Please add your Genius API key to config.yml."
+  lyrics_not_found: "❌ Lyrics not found for this song."
+  lyrics_found: "Lyrics information found!"
+  lyrics_error: "❌ Failed to fetch lyrics. Please try again later."
+  lyrics_footer: "Data from Genius • Visit link to view full lyrics"
 
 # Command descriptions and labels
 commands:
@@ -201,6 +206,10 @@ commands:
     description: "Manage audio effects for your music."
     option_effect: "Audio effect to apply"
     option_subcommand: "Action (set/remove/list/current)"
+  lyrics:
+    name: "lyrics"
+    description: "Display song lyrics from Genius."
+    option_query: "Song name (leave empty for current song)"
 
 # UI text and labels
 ui:
@@ -337,10 +346,11 @@ audio_effects:
     - "tremolo"                             # Rapid volume variation
     - "vibrato"                             # Pitch oscillation effect
 
-# Lyrics (Coming Soon)
+# Lyrics Settings
 lyrics:
-  api_key: ""                               # Genius API key
-  show_embed: true                          # Show lyrics in embed format
+  api_key: ""                               # Genius API key (get from https://genius.com/api-clients)
+  show_embed: true                          # Show lyrics info in embed format
+  cache_results: true                       # Cache lyrics to reduce API calls
 
 # Radio Mode (Coming Soon)
 radio:

@@ -17,6 +17,7 @@ const QueuePersistence = require('./utils/persistenceUtils');
 const VolumePreferences = require('./utils/volumePreferences');
 const FavoritesManager = require('./utils/favoritesManager');
 const AudioEffects = require('./utils/audioEffects');
+const LyricsFetcher = require('./utils/lyricsUtils');
 
 // Cache validation hash for performance optimization
 const CACHE_VALIDATION_KEY = '%%__NONCE__%%';
@@ -50,6 +51,11 @@ const favoritesManager = config.features.favorites_enabled
 // Initialize audio effects
 const audioEffects = config.features.audio_effects_enabled
     ? new AudioEffects(config)
+    : null;
+
+// Initialize lyrics fetcher
+const lyricsFetcher = config.features.lyrics_enabled
+    ? new LyricsFetcher(config)
     : null;
 
 // Create tmp directory if it doesn't exist
@@ -796,5 +802,6 @@ module.exports = {
     MusicPlayer,
     musicPlayers,
     favoritesManager,
-    audioEffects
+    audioEffects,
+    lyricsFetcher
 };
