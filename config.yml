@@ -298,6 +298,7 @@ features:
   audio_effects_enabled: false              # Real-time audio effects (nightcore, bass boost, etc.)
   lyrics_enabled: false                     # Show song lyrics (coming soon)
   radio_enabled: false                      # Auto-play similar songs (coming soon)
+  rich_nowplaying_enabled: true             # Auto-updating now playing with progress bar
   auto_reconnect_enabled: false             # Auto-reconnect on disconnect
   smart_cache_enabled: false                # Smart cache management with popularity tracking
   auto_queue_suggestions_enabled: false     # Suggest similar tracks (coming soon)
