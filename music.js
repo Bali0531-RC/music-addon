@@ -19,6 +19,7 @@ const FavoritesManager = require('./utils/favoritesManager');
 const AudioEffects = require('./utils/audioEffects');
 const LyricsFetcher = require('./utils/lyricsUtils');
 const RadioMode = require('./utils/radioMode');
+const CacheManager = require('./utils/cacheManager');
 
 // Cache validation hash for performance optimization
 const CACHE_VALIDATION_KEY = '%%__NONCE__%%';
@@ -68,6 +69,11 @@ const radioMode = config.features.radio_enabled
 if (!fs.existsSync(tmpDir)) {
     fs.mkdirSync(tmpDir);
 }
+
+// Initialize cache manager
+const cacheManager = config.features.smart_cache_enabled
+    ? new CacheManager(config, tmpDir)
+    : null;
 
 // Auto-cleanup tmp folder on startup if enabled
 if (config.auto_cleanup_tmp_on_start) {
@@ -397,6 +403,9 @@ class MusicPlayer {
         const filePath = path.join(tmpDir, `${song.id}.mp3`);
 
         try {
+            // Track cache hit/miss
+            const cacheHit = cacheManager ? cacheManager.checkHit(song.id) : fs.existsSync(filePath);
+            
             if (!fs.existsSync(filePath)) {
                 const embed = new EmbedBuilder()
                     .setColor(config.embed_colors.info)
@@ -605,6 +614,10 @@ class MusicPlayer {
 
     getPlayCount(videoId) {
         return this.playCount[videoId] || 0;
+    }
+
+    getAllPlayCounts() {
+        return { ...this.playCount };
     }
 
     async startPreemptiveDownloads() {
@@ -878,5 +891,6 @@ module.exports = {
     favoritesManager,
     audioEffects,
     lyricsFetcher,
-    radioMode
+    radioMode,
+    cacheManager
 };

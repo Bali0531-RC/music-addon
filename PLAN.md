@@ -190,19 +190,25 @@
 
 ---
 
-### 3.2 Smart Cache Management ⏳ 🔧
+### 3.2 Smart Cache Management ✅ 🔧
 **Description:** Track popularity, keep frequent songs  
-**Commands:** `/cache stats`, `/cache clear`  
+**Commands:** `/cache stats/clean/clear`  
 **Config Options:**
 - `smart_cache_enabled: true/false`
-- `cache_popular_threshold: 3` (play count)
-- `cache_max_size_mb: 1000`
+- `smart_cache.popular_threshold: 3` (play count)
+- `smart_cache.max_size_mb: 1000`
 
-**Implementation:**
-- Track play count per video ID
-- Keep frequently played songs
-- Show cache stats (size, hits, misses)
-- Admin cache clear command
+**Implementation:** COMPLETED
+- Created `utils/cacheManager.js` with intelligent cache management
+- `/cache stats` - View cache statistics (size, hits, misses, hit rate, popular files)
+- `/cache clean` - Clean old and unpopular files based on rules
+- `/cache clear` - Clear entire cache (admin only)
+- Track cache hits/misses for performance monitoring
+- Keep frequently played songs (configurable threshold)
+- Automatic cleanup when over size limit
+- Age-based deletion for unpopular files (7+ days old)
+- Shows top 5 most popular cached files
+- Integrated into playNext for hit/miss tracking
 
 ---
 
