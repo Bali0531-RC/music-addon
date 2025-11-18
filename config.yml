@@ -133,6 +133,16 @@ messages:
   lyrics_found: "Lyrics information found!"
   lyrics_error: "❌ Failed to fetch lyrics. Please try again later."
   lyrics_footer: "Data from Genius • Visit link to view full lyrics"
+  radio_not_active: "📻 Radio mode is not active."
+  radio_status_title: "📻 Radio Mode Status"
+  radio_status_footer: "Radio will automatically add related songs to queue"
+  radio_stopped_title: "📻 Radio Mode Stopped"
+  radio_stopped_description: "Radio mode has been disabled. The queue will no longer auto-refill."
+  radio_already_active: "📻 Radio mode is already active. Use /radio stop to disable it first."
+  radio_started_title: "📻 Radio Mode Started"
+  radio_started_description: "Radio mode activated! Similar songs will be automatically added to the queue."
+  radio_start_error: "❌ Failed to start radio mode."
+  radio_footer: "Queue will auto-refill when running low"
 
 # Command descriptions and labels
 commands:
@@ -210,6 +220,10 @@ commands:
     name: "lyrics"
     description: "Display song lyrics from Genius."
     option_query: "Song name (leave empty for current song)"
+  radio:
+    name: "radio"
+    description: "Auto-play related songs continuously."
+    option_query: "Song to base radio on (leave empty for current)"
 
 # UI text and labels
 ui:
@@ -352,7 +366,7 @@ lyrics:
   show_embed: true                          # Show lyrics info in embed format
   cache_results: true                       # Cache lyrics to reduce API calls
 
-# Radio Mode (Coming Soon)
+# Radio Mode Settings
 radio:
   queue_refill_at: 5                        # Add more songs when queue has this many left
   fetch_count: 10                           # How many songs to add at once

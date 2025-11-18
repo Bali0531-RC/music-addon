@@ -18,6 +18,7 @@ const VolumePreferences = require('./utils/volumePreferences');
 const FavoritesManager = require('./utils/favoritesManager');
 const AudioEffects = require('./utils/audioEffects');
 const LyricsFetcher = require('./utils/lyricsUtils');
+const RadioMode = require('./utils/radioMode');
 
 // Cache validation hash for performance optimization
 const CACHE_VALIDATION_KEY = '%%__NONCE__%%';
@@ -56,6 +57,11 @@ const audioEffects = config.features.audio_effects_enabled
 // Initialize lyrics fetcher
 const lyricsFetcher = config.features.lyrics_enabled
     ? new LyricsFetcher(config)
+    : null;
+
+// Initialize radio mode
+const radioMode = config.features.radio_enabled
+    ? new RadioMode(config)
     : null;
 
 // Create tmp directory if it doesn't exist
@@ -104,22 +110,45 @@ class MusicPlayer {
             }
             
             this.nowPlaying = null;
-            this.playNext();
-
-            if (oldSong) {
-                const filePath = path.join(tmpDir, `${oldSong.id}.mp3`);
-                setTimeout(() => {
-                    fs.unlink(filePath, (err) => {
-                        if (err) {
-                            console.error(`Failed to delete ${filePath}:`, err);
-                        } else {
-                            console.log(config.console.deleted_file.replace('{file}', filePath));
-                        }
-                    });
-                }, config.post_play_delete_delay_minutes * 60 * 1000);
+        
+        // Check if radio mode needs refill
+        if (config.features.radio_enabled && radioMode && radioMode.isActive(this.guildId)) {
+            const queueSize = this.queue.length;
+            if (radioMode.shouldRefill(this.guildId, queueSize)) {
+                this.refillRadioQueue().catch(err => {
+                    console.error('Error refilling radio queue:', err);
+                });
             }
-        });
-    }
+        }
+        
+        this.nowPlaying = null;
+        
+        // Check if radio mode needs refill
+        if (config.features.radio_enabled && radioMode && radioMode.isActive(this.guildId)) {
+            const queueSize = this.queue.length;
+            if (radioMode.shouldRefill(this.guildId, queueSize)) {
+                this.refillRadioQueue().catch(err => {
+                    console.error('Error refilling radio queue:', err);
+                });
+            }
+        }
+        
+        this.playNext();
+
+        if (oldSong) {
+            const filePath = path.join(tmpDir, `${oldSong.id}.mp3`);
+            setTimeout(() => {
+                fs.unlink(filePath, (err) => {
+                    if (err) {
+                        console.error(`Failed to delete ${filePath}:`, err);
+                    } else {
+                        console.log(config.console.deleted_file.replace('{file}', filePath));
+                    }
+                });
+            }, config.post_play_delete_delay_minutes * 60 * 1000);
+        }
+    });
+}
 
     async play(query, retryCount = 0, requester = null, requesterId = null) {
         // Store requester info if provided
@@ -741,6 +770,63 @@ class MusicPlayer {
         }
         return `${minutes}:${secs.toString().padStart(2, '0')}`;
     }
+
+    async refillRadioQueue() {
+        if (!config.features.radio_enabled || !radioMode || !radioMode.isActive(this.guildId)) {
+            return;
+        }
+
+        const radioInfo = radioMode.getInfo(this.guildId);
+        if (!radioInfo) return;
+
+        // Get the last song in queue or now playing to base recommendations on
+        let seedSong = this.queue.length > 0 
+            ? this.queue[this.queue.length - 1] 
+            : this.nowPlaying;
+
+        if (!seedSong) return;
+
+        try {
+            // Parse song info for better search
+            const songTitle = seedSong.title
+                .replace(/\(official.*?\)/gi, '')
+                .replace(/\[official.*?\]/gi, '')
+                .trim();
+
+            const relatedSongs = await radioMode.getNextSongs(this.guildId, songTitle);
+
+            if (relatedSongs.length === 0) {
+                console.log(`No related songs found for radio mode in guild ${this.guildId}`);
+                return;
+            }
+
+            // Add related songs to queue
+            let addedCount = 0;
+            for (const song of relatedSongs) {
+                // Add to queue with radio flag
+                this.queue.push({
+                    id: song.id,
+                    title: song.title,
+                    url: song.url,
+                    duration: song.duration || 0,
+                    requester: '🎵 Radio Mode',
+                    requesterId: 'radio',
+                    isRadio: true
+                });
+                addedCount++;
+            }
+
+            if (addedCount > 0 && this.textChannel) {
+                const embed = new EmbedBuilder()
+                    .setColor(config.embed_colors.info)
+                    .setDescription(`🎵 Radio: Added ${addedCount} related ${addedCount === 1 ? 'song' : 'songs'} to queue`);
+                this.textChannel.send({ embeds: [embed] }).catch(() => {});
+            }
+
+        } catch (error) {
+            console.error(`Error refilling radio queue for guild ${this.guildId}:`, error);
+        }
+    }
 }
 
 async function searchYouTube(query) {
@@ -803,5 +889,6 @@ module.exports = {
     musicPlayers,
     favoritesManager,
     audioEffects,
-    lyricsFetcher
+    lyricsFetcher,
+    radioMode
 };

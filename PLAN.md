@@ -150,19 +150,26 @@
 
 ---
 
-### 2.5 Radio Mode ⏳ 🔧
+### 2.5 Radio Mode ✅ 🔧
 **Description:** Continuous playback based on seed  
-**Commands:** `/radio start [query]`, `/radio stop`  
+**Commands:** `/radio start/stop/status`  
 **Config Options:**
 - `radio_enabled: true/false`
 - `radio_queue_refill_at: 5` (songs remaining)
 - `radio_fetch_count: 10` (songs to add)
 
-**Implementation:**
-- Use YouTube recommendations
-- Auto-add songs when queue low
-- Show radio mode indicator
-- Disable when user adds manual songs
+**Implementation:** COMPLETED
+- Created `utils/radioMode.js` with YouTube recommendations
+- `/radio start` - Start radio with current or specified song
+- `/radio stop` - Stop radio mode
+- `/radio status` - Check radio mode status
+- Auto-refill queue when running low (configurable threshold)
+- Fetches related videos using yt-dlp
+- Fallback to search-based recommendations
+- Tracks added videos to prevent duplicates
+- Per-guild radio state management
+- Automatic queue refill in playNext loop
+- Radio songs marked with 🎵 Radio Mode requester
 
 ---
 
@@ -341,10 +348,10 @@
 11. ✅ Favorites & Playlists
 12. ✅ Audio effects
 
-### Week 4 (Advanced) - IN PROGRESS
+### Week 4 (Advanced) ✅ COMPLETED
 13. ✅ Lyrics fetching
-14. ⏳ Rich now playing (pending)
-15. ⏳ Radio mode (pending)
+14. ✅ Radio mode
+15. ⏳ Rich now playing (pending)
 16. ⏳ Smart cache management (pending)
 
 ---
