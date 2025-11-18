@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { getMusicPlayer, config, musicPlayers } = require('../music');
+const { getMusicPlayer, config, musicPlayers, statisticsManager } = require('../music');
 const { isBlacklisted } = require('../utils/musicUtils');
 
 // Command: /musicstats - Show music bot statistics
@@ -36,32 +36,35 @@ module.exports = {
         }
 
         const type = interaction.options.getString('type') || 'server';
-        const player = getMusicPlayer(interaction, false);
-
-        if (!player) {
+        
+        // Check if statistics are available
+        if (!statisticsManager) {
             const embed = new EmbedBuilder()
-                .setColor(config.embed_colors.info)
-                .setDescription(config.messages.stats_no_data);
+                .setColor(config.embed_colors.error)
+                .setDescription('❌ Statistics feature is not properly initialized.');
             return interaction.editReply({ embeds: [embed] });
         }
+        
+        const history = statisticsManager.getHistory(interaction.guildId);
+        const player = getMusicPlayer(interaction, false);
 
         const embed = new EmbedBuilder()
             .setColor(config.embed_colors.info);
 
         if (type === 'server') {
-            const totalPlayed = player.history.length;
-            const queueSize = player.queue.length;
-            const uniqueSongs = new Set(player.history.map(s => s.id)).size;
+            const totalPlayed = history.length;
+            const queueSize = player ? player.queue.length : 0;
+            const uniqueSongs = new Set(history.map(s => s.id)).size;
             
             let topRequesters = {};
-            player.history.forEach(song => {
+            history.forEach(song => {
                 topRequesters[song.requester] = (topRequesters[song.requester] || 0) + 1;
             });
             
             const topRequestersList = Object.entries(topRequesters)
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 5)
-                .map(([ name, count], index) => `${index + 1}. ${name}: **${count}** songs`)
+                .map(([name, count], index) => `${index + 1}. ${name}: **${count}** songs`)
                 .join('\n') || 'No data yet';
 
             embed.setTitle(config.messages.stats_title)
@@ -74,7 +77,7 @@ module.exports = {
 
         } else if (type === 'personal') {
             const userName = interaction.user.tag;
-            const userSongs = player.history.filter(s => s.requester === userName);
+            const userSongs = history.filter(s => s.requester === userName);
             const totalPlayed = userSongs.length;
             
             const topSongs = {};
@@ -100,7 +103,7 @@ module.exports = {
 
         } else if (type === 'top') {
             const songCounts = {};
-            player.history.forEach(song => {
+            history.forEach(song => {
                 if (!songCounts[song.id]) {
                     songCounts[song.id] = {
                         title: song.title,

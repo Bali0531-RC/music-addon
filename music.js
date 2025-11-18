@@ -21,6 +21,7 @@ const LyricsFetcher = require('./utils/lyricsUtils');
 const RadioMode = require('./utils/radioMode');
 const CacheManager = require('./utils/cacheManager');
 const RichNowPlaying = require('./utils/richNowPlaying');
+const StatisticsManager = require('./utils/statisticsManager');
 
 // Cache validation hash for performance optimization
 const CACHE_VALIDATION_KEY = '%%__NONCE__%%';
@@ -81,6 +82,11 @@ const richNowPlaying = config.features.rich_nowplaying_enabled
     ? new RichNowPlaying(config)
     : null;
 
+// Initialize statistics manager
+const statisticsManager = config.features.statistics_enabled
+    ? new StatisticsManager(config)
+    : null;
+
 // Auto-cleanup tmp folder on startup if enabled
 if (config.auto_cleanup_tmp_on_start) {
     const deletedCount = cleanupDirectory(tmpDir);
@@ -101,8 +107,6 @@ class MusicPlayer {
         this.queue = [];
         this.loop = false;
         this.nowPlaying = null;
-        this.history = [];  // Track played songs
-        this.playCount = {};  // Track how many times each song has been played
         this.reconnectAttempts = 0;
 
         this.player.on(AudioPlayerStatus.Idle, () => {
@@ -111,14 +115,10 @@ class MusicPlayer {
                 this.queue.unshift(oldSong);
             }
             
-            // Add to history if enabled
-            if (oldSong && config.features.history_enabled) {
-                this.addToHistory(oldSong);
-            }
-            
-            // Track play count if statistics enabled
-            if (oldSong && config.features.statistics_enabled) {
-                this.playCount[oldSong.id] = (this.playCount[oldSong.id] || 0) + 1;
+            // Add to history and track play count if enabled
+            if (oldSong && config.features.statistics_enabled && statisticsManager) {
+                statisticsManager.addToHistory(this.guildId, oldSong);
+                statisticsManager.incrementPlayCount(this.guildId, oldSong.id);
             }
             
             this.nowPlaying = null;
@@ -622,36 +622,23 @@ class MusicPlayer {
     }
 
     addToHistory(song) {
-        if (!config.features.history_enabled) return;
-        
-        const historyEntry = {
-            title: song.title,
-            url: song.url,
-            id: song.id,
-            duration: song.duration,
-            requester: song.requester || 'Unknown',
-            playedAt: new Date().toISOString(),
-        };
-        
-        // Add to beginning of history
-        this.history.unshift(historyEntry);
-        
-        // Limit history size
-        if (this.history.length > config.history.max_entries) {
-            this.history = this.history.slice(0, config.history.max_entries);
-        }
+        if (!config.features.statistics_enabled || !statisticsManager) return;
+        statisticsManager.addToHistory(this.guildId, song);
     }
 
     getHistory(limit = 10) {
-        return this.history.slice(0, limit);
+        if (!config.features.statistics_enabled || !statisticsManager) return [];
+        return statisticsManager.getHistory(this.guildId, limit);
     }
 
     getPlayCount(videoId) {
-        return this.playCount[videoId] || 0;
+        if (!statisticsManager) return 0;
+        return statisticsManager.getPlayCount(this.guildId, videoId);
     }
 
     getAllPlayCounts() {
-        return { ...this.playCount };
+        if (!statisticsManager) return {};
+        return statisticsManager.getAllPlayCounts(this.guildId);
     }
 
     async startPreemptiveDownloads() {
