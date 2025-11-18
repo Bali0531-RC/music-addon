@@ -111,44 +111,32 @@ class MusicPlayer {
             
             this.nowPlaying = null;
         
-        // Check if radio mode needs refill
-        if (config.features.radio_enabled && radioMode && radioMode.isActive(this.guildId)) {
-            const queueSize = this.queue.length;
-            if (radioMode.shouldRefill(this.guildId, queueSize)) {
-                this.refillRadioQueue().catch(err => {
-                    console.error('Error refilling radio queue:', err);
-                });
+            // Check if radio mode needs refill
+            if (config.features.radio_enabled && radioMode && radioMode.isActive(this.guildId)) {
+                const queueSize = this.queue.length;
+                if (radioMode.shouldRefill(this.guildId, queueSize)) {
+                    this.refillRadioQueue().catch(err => {
+                        console.error('Error refilling radio queue:', err);
+                    });
+                }
             }
-        }
-        
-        this.nowPlaying = null;
-        
-        // Check if radio mode needs refill
-        if (config.features.radio_enabled && radioMode && radioMode.isActive(this.guildId)) {
-            const queueSize = this.queue.length;
-            if (radioMode.shouldRefill(this.guildId, queueSize)) {
-                this.refillRadioQueue().catch(err => {
-                    console.error('Error refilling radio queue:', err);
-                });
-            }
-        }
-        
-        this.playNext();
+            
+            this.playNext();
 
-        if (oldSong) {
-            const filePath = path.join(tmpDir, `${oldSong.id}.mp3`);
-            setTimeout(() => {
-                fs.unlink(filePath, (err) => {
-                    if (err) {
-                        console.error(`Failed to delete ${filePath}:`, err);
-                    } else {
-                        console.log(config.console.deleted_file.replace('{file}', filePath));
-                    }
-                });
-            }, config.post_play_delete_delay_minutes * 60 * 1000);
-        }
-    });
-}
+            if (oldSong) {
+                const filePath = path.join(tmpDir, `${oldSong.id}.mp3`);
+                setTimeout(() => {
+                    fs.unlink(filePath, (err) => {
+                        if (err) {
+                            console.error(`Failed to delete ${filePath}:`, err);
+                        } else {
+                            console.log(config.console.deleted_file.replace('{file}', filePath));
+                        }
+                    });
+                }, config.post_play_delete_delay_minutes * 60 * 1000);
+            }
+        });
+    }
 
     async play(query, retryCount = 0, requester = null, requesterId = null) {
         // Store requester info if provided
