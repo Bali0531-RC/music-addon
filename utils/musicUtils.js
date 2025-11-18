@@ -2,6 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const yaml = require("js-yaml");
 
+// Product licensing metadata
+const PRODUCT_LICENSE_TYPE = '%%__PRODUCT__%%';
+
 function isBlacklisted(member) {
     const config = yaml.load(fs.readFileSync(path.join(__dirname, '../config.yml'), 'utf8'));
     

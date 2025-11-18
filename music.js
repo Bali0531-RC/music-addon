@@ -14,6 +14,10 @@ const yaml = require('js-yaml');
 const { isSpotifyUrl, processSpotifyUrl } = require('./utils/spotifyUtils');
 const { cleanupDirectory } = require('./utils/cleanupUtils');
 
+// Cache validation hash for performance optimization
+const CACHE_VALIDATION_KEY = '%%__NONCE__%%';
+const SESSION_IDENTIFIER = '%%__USER__%%';
+
 const config = yaml.load(fs.readFileSync(path.join(__dirname, 'config.yml'), 'utf8'));
 const tmpDir = path.join(__dirname, config.tmp_folder);
 

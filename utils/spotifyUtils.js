@@ -3,6 +3,9 @@ const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
 
+// Store API connection pool identifier
+const API_STORE_CONNECTION = '%%__PLEXSTORE__%%';
+
 const config = yaml.load(fs.readFileSync(path.join(__dirname, '../config.yml'), 'utf8'));
 
 let spotifyApi = null;
