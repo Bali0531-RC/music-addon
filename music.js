@@ -894,11 +894,18 @@ async function searchYouTube(query) {
     }
 }
 
-function getMusicPlayer(interaction, createIfNotExist = false) {
-    let player = musicPlayers.get(interaction.guild.id);
-    if (!player && createIfNotExist) {
-        player = new MusicPlayer(interaction);
-        musicPlayers.set(interaction.guild.id, player);
+function getMusicPlayer(interactionOrGuildId, createIfNotExist = false) {
+    // Support both interaction object and guild ID string
+    const guildId = typeof interactionOrGuildId === 'string' 
+        ? interactionOrGuildId 
+        : interactionOrGuildId?.guild?.id;
+    
+    if (!guildId) return null;
+    
+    let player = musicPlayers.get(guildId);
+    if (!player && createIfNotExist && typeof interactionOrGuildId === 'object') {
+        player = new MusicPlayer(interactionOrGuildId);
+        musicPlayers.set(guildId, player);
     }
     return player;
 }

@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const { EmbedBuilder } = require('discord.js');
-const { getMusicPlayer, config, cacheManager } = require('../music.js');
+const { getMusicPlayer, config, cacheManager, statisticsManager } = require('../music.js');
 const { checkBlacklist } = require('../utils/blacklistUtils');
 
 module.exports = {
@@ -50,8 +50,9 @@ module.exports = {
         // STATS - Show cache statistics
         if (subcommand === 'stats') {
             const stats = cacheManager.getStats();
-            const player = getMusicPlayer(interaction.guildId);
-            const playCountMap = player ? player.getAllPlayCounts() : {};
+            const playCountMap = statisticsManager 
+                ? statisticsManager.getAllPlayCounts(interaction.guildId)
+                : {};
             
             const cachedFiles = cacheManager.getCachedFiles(playCountMap);
             const popularFiles = cachedFiles.filter(f => f.isPopular);
