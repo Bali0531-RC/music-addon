@@ -52,4 +52,68 @@ function isBlacklisted(member) {
     return { blacklisted: false };
 }
 
-module.exports = { isBlacklisted };
+function isAdmin(member) {
+    const config = yaml.load(fs.readFileSync(path.join(__dirname, '../config.yml'), 'utf8'));
+    
+    // Check if user has any admin roles
+    if (config.MusicBot.AdminRoles && config.MusicBot.AdminRoles.length > 0) {
+        return member.roles.cache.some(role => 
+            config.MusicBot.AdminRoles.includes(role.id)
+        );
+    }
+    
+    return false;
+}
+
+function checkVoiceChannel(interaction, getMusicPlayer, isPlayCommand = false) {
+    const config = yaml.load(fs.readFileSync(path.join(__dirname, '../config.yml'), 'utf8'));
+    
+    // Check if user is an admin
+    const userIsAdmin = isAdmin(interaction.member);
+    
+    // Check if user is in a voice channel
+    if (!interaction.member.voice.channel) {
+        // Admins can control bot even if not in a voice channel
+        if (userIsAdmin) {
+            // For play command, bot must already be in a voice channel
+            if (isPlayCommand) {
+                const player = getMusicPlayer(interaction);
+                if (!player || !player.voiceChannel) {
+                    return { 
+                        allowed: false, 
+                        reason: config.messages.no_voice_channel 
+                    };
+                }
+            }
+            // Admin can use other commands without being in a voice channel
+            return { allowed: true };
+        }
+        
+        return { 
+            allowed: false, 
+            reason: config.messages.no_voice_channel 
+        };
+    }
+
+    // Get the music player for this guild
+    const player = getMusicPlayer(interaction);
+    
+    // If bot is playing music, check if user is in the same voice channel
+    if (player && player.voiceChannel) {
+        if (interaction.member.voice.channel.id !== player.voiceChannel.id) {
+            // Admins can bypass same-channel restriction
+            if (userIsAdmin) {
+                return { allowed: true };
+            }
+            
+            return { 
+                allowed: false, 
+                reason: config.messages.not_in_same_channel 
+            };
+        }
+    }
+
+    return { allowed: true };
+}
+
+module.exports = { isBlacklisted, checkVoiceChannel };

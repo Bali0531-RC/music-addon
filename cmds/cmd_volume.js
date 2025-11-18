@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { getMusicPlayer, config } = require('../music');
-const { isBlacklisted } = require('../utils/musicUtils');
+const { isBlacklisted, checkVoiceChannel } = require('../utils/musicUtils');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -16,6 +16,14 @@ module.exports = {
             const embed = new EmbedBuilder()
                 .setColor(config.embed_colors.error)
                 .setDescription(blacklistCheck.reason);
+            return interaction.reply({ embeds: [embed], ephemeral: true });
+        }
+
+        const voiceCheck = checkVoiceChannel(interaction, getMusicPlayer);
+        if (!voiceCheck.allowed) {
+            const embed = new EmbedBuilder()
+                .setColor(config.embed_colors.error)
+                .setDescription(voiceCheck.reason);
             return interaction.reply({ embeds: [embed], ephemeral: true });
         }
 

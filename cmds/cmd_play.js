@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { getMusicPlayer, searchYouTube, config } = require('../music');
-const { isBlacklisted } = require('../utils/musicUtils');
+const { isBlacklisted, checkVoiceChannel } = require('../utils/musicUtils');
 const { isSpotifyUrl } = require('../utils/spotifyUtils');
 
 module.exports = {
@@ -19,6 +19,14 @@ module.exports = {
             const embed = new EmbedBuilder()
                 .setColor(config.embed_colors.error)
                 .setDescription(blacklistCheck.reason);
+            return interaction.editReply({ embeds: [embed] });
+        }
+
+        const voiceCheck = checkVoiceChannel(interaction, getMusicPlayer, true);
+        if (!voiceCheck.allowed) {
+            const embed = new EmbedBuilder()
+                .setColor(config.embed_colors.error)
+                .setDescription(voiceCheck.reason);
             return interaction.editReply({ embeds: [embed] });
         }
 

@@ -8,6 +8,11 @@
 MusicBot:
   Enabled: true
   
+  # Admin roles that can bypass voice channel restrictions
+  # Admins can control the bot from any channel (or no channel)
+  # For play command, bot must already be in a voice channel
+  AdminRoles: []  # Example: ["123456789012345678", "987654321098765432"]
+  
   # Whitelist settings (if enabled, only whitelisted users/roles can use the bot)
   # Leave arrays empty to disable whitelist
   WhitelistEnabled: false
@@ -71,6 +76,7 @@ messages:
   spotify_not_configured: "Spotify is not configured. Please add your API credentials to config.yml"
   not_whitelisted: "You are not whitelisted to use music commands."
   role_not_whitelisted: "Your role is not whitelisted to use music commands."
+  not_in_same_channel: "❌ You must be in the same voice channel as the bot to use this command."
   age_restricted: "⚠️ This video is age-restricted and cannot be played. Try a different version."
   video_unavailable: "⚠️ This video is unavailable or private. Skipping..."
   no_results_found: "❌ No playable results found for this query."
