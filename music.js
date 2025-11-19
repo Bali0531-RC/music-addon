@@ -22,10 +22,54 @@ const RadioMode = require('./utils/radioMode');
 const CacheManager = require('./utils/cacheManager');
 const RichNowPlaying = require('./utils/richNowPlaying');
 const StatisticsManager = require('./utils/statisticsManager');
+const VersionChecker = require('./VersionChecker');
 
-// Cache validation hash for performance optimization
-const CACHE_VALIDATION_KEY = '%%__NONCE__%%';
-const SESSION_IDENTIFIER = '%%__USER__%%';
+// ===========================================================================
+// Version Checking & Startup Message
+// ===========================================================================
+const ADDON_NAME = 'MusicAddon';
+const CURRENT_VERSION = '1.0.0'; 
+const DONATION_LINKS = [
+    { name: 'PayPal', url: 'jatekbali@gmail.com' },
+    { name: 'LTC', url: 'ltc1qmmn5a8cs79wduucu7vzcah48ps96vs9rm8x9ug' }
+];
+
+/**
+ * Checks for new updates and logs the result to the console.
+ */
+async function runVersionCheck() {
+    const checker = new VersionChecker(ADDON_NAME, CURRENT_VERSION);
+    const checkResult = await checker.checkForUpdates();
+    
+    console.log(checker.formatVersionMessage(checkResult));
+    
+    if (checkResult.isOutdated) {
+        console.log(checker.getUpdateDetails(checkResult));
+    }
+}
+
+/**
+ * Displays a fancy startup message with addon information and donation links.
+ */
+function displayStartupMessage() {
+    const author = 'bali0531';
+    const donationText = DONATION_LINKS.map(link => `\x1b[96m${link.name}\x1b[0m: \x1b[4m${link.url}\x1b[0m`).join('\n');
+
+    console.log('\n\x1b[32m' + '='.repeat(60) + '\x1b[0m');
+    console.log(`\x1b[1m🎵 \x1b[36m${ADDON_NAME}\x1b[0m has been loaded! \x1b[1m🎵`);
+    console.log(`   \x1b[90mVersion:\x1b[0m \x1b[1m${CURRENT_VERSION}\x1b[0m`);
+    console.log(`   \x1b[90mAuthor:\x1b[0m \x1b[1m${author}\x1b[0m`);
+    console.log('\n\x1b[93mYour support is greatly appreciated to keep development going:\x1b[0m');
+    console.log(donationText);
+    console.log('\x1b[32m' + '='.repeat(60) + '\x1b[0m\n');
+}
+
+// Display startup message and run initial version check
+displayStartupMessage();
+runVersionCheck();
+
+// Schedule daily version checks
+setInterval(runVersionCheck, 1000 * 60 * 60 * 24);
 
 const config = yaml.load(fs.readFileSync(path.join(__dirname, 'config.yml'), 'utf8'));
 const tmpDir = path.join(__dirname, config.tmp_folder);
