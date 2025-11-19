@@ -30,7 +30,7 @@ const VersionChecker = require('./VersionChecker');
 const ADDON_NAME = 'MusicAddon';
 const CURRENT_VERSION = '1.0.0'; 
 const DONATION_LINKS = [
-    { name: 'PayPal', url: 'jatekbali@gmail.com' },
+    { name: 'PayPal', url: 'developer@bali0531.hu' },
     { name: 'LTC', url: 'ltc1qmmn5a8cs79wduucu7vzcah48ps96vs9rm8x9ug' },
     { name: 'Github', url: 'https://github.com/sponsors/Bali0531-RC' }
 ];
