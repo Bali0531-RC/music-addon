@@ -65,8 +65,9 @@ function displayStartupMessage() {
 }
 
 // Display startup message and run initial version check
-displayStartupMessage();
-runVersionCheck();
+    setTimeout(() => {
+        displayStartupMessage();
+    }, 10000);runVersionCheck();
 
 // Schedule daily version checks
 setInterval(runVersionCheck, 1000 * 60 * 60 * 24);
