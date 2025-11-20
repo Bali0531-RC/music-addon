@@ -103,27 +103,49 @@ function displayStartupMessage() {
 setInterval(runVersionCheck, 1000 * 60 * 60 * 24);
 
 const config = yaml.load(fs.readFileSync(path.join(__dirname, 'config.yml'), 'utf8'));
-const tmpDir = path.join(__dirname, config.tmp_folder);
+const tmpDir = path.join(__dirname, config.tmp_folder || '.tmp');
+
+// Ensure required config sections exist with defaults
+if (!config.features) {
+    console.warn('⚠️ Warning: config.yml missing "features" section. Using defaults.');
+    config.features = {};
+}
+if (!config.embed_colors) {
+    config.embed_colors = { success: '#00FF00', error: '#FF0000', info: '#0099FF', warning: '#FFA500' };
+}
+if (!config.messages) {
+    config.messages = {};
+}
+if (!config.console) {
+    config.console = {};
+}
+if (!config.ui) {
+    config.ui = {};
+}
+if (!config.commands) {
+    console.error('❌ Error: config.yml missing "commands" section. Bot cannot function without command definitions.');
+    process.exit(1);
+}
 
 // Initialize queue persistence
 const queuePersistence = config.features.queue_persistence_enabled 
-    ? new QueuePersistence(path.join(__dirname, config.queue_persistence.file))
+    ? new QueuePersistence(path.join(__dirname, config.queue_persistence?.file || 'data/queues.json'))
     : null;
 
 // Initialize volume preferences
 const volumePreferences = config.features.user_volume_preferences_enabled
     ? new VolumePreferences(
-        path.join(__dirname, config.user_volume.data_file),
-        config.user_volume.default
+        path.join(__dirname, config.user_volume?.data_file || 'data/volume_prefs.json'),
+        config.user_volume?.default || 50
     )
     : null;
 
 // Initialize favorites manager
 const favoritesManager = config.features.favorites_enabled
     ? new FavoritesManager(
-        path.join(__dirname, config.favorites.data_file),
-        config.favorites.max_playlists_per_user,
-        config.favorites.max_songs_per_playlist
+        path.join(__dirname, config.favorites?.data_file || 'data/favorites.json'),
+        config.favorites?.max_playlists_per_user || 10,
+        config.favorites?.max_songs_per_playlist || 100
     )
     : null;
 
@@ -163,10 +185,11 @@ const statisticsManager = config.features.statistics_enabled
     : null;
 
 // Auto-cleanup tmp folder on startup if enabled
-if (config.auto_cleanup_tmp_on_start) {
+if (config.auto_cleanup_tmp_on_start !== false) {
     const deletedCount = cleanupDirectory(tmpDir);
     if (deletedCount > 0) {
-        console.log(config.console.cleanup_startup.replace('{count}', deletedCount).replace('{folder}', config.tmp_folder));
+        const cleanupMsg = config.console?.cleanup_startup || '🧹 Cleaned up {count} file(s) from {folder} on startup';
+        console.log(cleanupMsg.replace('{count}', deletedCount).replace('{folder}', config.tmp_folder || '.tmp'));
     }
 }
 
