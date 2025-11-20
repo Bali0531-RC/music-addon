@@ -22,10 +22,85 @@ const RadioMode = require('./utils/radioMode');
 const CacheManager = require('./utils/cacheManager');
 const RichNowPlaying = require('./utils/richNowPlaying');
 const StatisticsManager = require('./utils/statisticsManager');
+const VersionChecker = require('./VersionChecker');
 
-// Cache validation hash for performance optimization
-const CACHE_VALIDATION_KEY = '%%__NONCE__%%';
-const SESSION_IDENTIFIER = '%%__USER__%%';
+// ===========================================================================
+// Version Checking & Startup Message
+// ===========================================================================
+const ADDON_NAME = 'MusicAddon';
+const CURRENT_VERSION = '1.0.0'; 
+const DONATION_LINKS = [
+    { name: 'PayPal', url: 'developer@bali0531.hu' },
+    { name: 'LTC', url: 'ltc1qmmn5a8cs79wduucu7vzcah48ps96vs9rm8x9ug' }
+];
+
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * Checks for new updates and logs the result to the console.
+ */
+async function runVersionCheck() {
+    console.log('\x1b[33mChecking for updates...\x1b[0m');
+    await delay(12000); // 12-second delay
+
+    const checker = new VersionChecker(ADDON_NAME, CURRENT_VERSION);
+    const checkResult = await checker.checkForUpdates();
+
+    console.log('\n\x1b[32m' + '='.repeat(60) + '\x1b[0m');
+
+    if (checkResult.success) {
+        if (checkResult.isOutdated) {
+            console.log(`\x1b[1m🚨 \x1b[31mUPDATE AVAILABLE for ${ADDON_NAME}\x1b[0m 🚨`);
+            console.log(`   \x1b[90mCurrent Version:\x1b[0m \x1b[1m${checkResult.current}\x1b[0m`);
+            console.log(`   \x1b[90mLatest Version:\x1b[0m \x1b[1m\x1b[32m${checkResult.latest}\x1b[0m`);
+            if (checkResult.description) {
+                console.log(`   \x1b[90mChanges:\x1b[0m ${checkResult.description}`);
+            }
+            if (checkResult.urgent) {
+                console.log('   \x1b[91m⚠️ URGENT UPDATE RECOMMENDED\x1b[0m');
+            }
+            if (checkResult.downloadUrl) {
+                console.log(`   \x1b[90mDownload:\x1b[0m \x1b[4m${checkResult.downloadUrl}\x1b[0m`);
+            }
+        } else if (checkResult.isCurrent) {
+            console.log(`\x1b[1m✅ \x1b[32m${ADDON_NAME} is up to date!\x1b[0m`);
+            console.log(`   \x1b[90mVersion:\x1b[0m \x1b[1m${checkResult.current}\x1b[0m`);
+        } else if (checkResult.isNewer) {
+            console.log(`\x1b[1m🔧 \x1b[36mDevelopment version detected for ${ADDON_NAME}\x1b[0m`);
+            console.log(`   \x1b[90mYour Version:\x1b[0m \x1b[1m${checkResult.current}\x1b[0m`);
+            console.log(`   \x1b[90mLatest Public Version:\x1b[0m \x1b[1m${checkResult.latest}\x1b[0m`);
+        }
+    } else {
+        console.log(`\x1b[1m❌ \x1b[33mVersion check failed for ${ADDON_NAME}\x1b[0m`);
+        console.log(`   \x1b[90mReason:\x1b[0m ${checkResult.error}`);
+    }
+    console.log('\x1b[32m' + '='.repeat(60) + '\x1b[0m\n');
+}
+
+/**
+ * Displays a fancy startup message with addon information and donation links.
+ */
+function displayStartupMessage() {
+    const author = 'bali0531';
+    const donationText = DONATION_LINKS.map(link => `\x1b[96m${link.name}\x1b[0m: \x1b[4m${link.url}\x1b[0m`).join('\n');
+
+    console.log('\n\x1b[32m' + '='.repeat(60) + '\x1b[0m');
+    console.log(`\x1b[1m🎵 \x1b[36m${ADDON_NAME}\x1b[0m has been loaded! \x1b[1m🎵`);
+    console.log(`   \x1b[90mVersion:\x1b[0m \x1b[1m${CURRENT_VERSION}\x1b[0m`);
+    console.log(`   \x1b[90mAuthor:\x1b[0m \x1b[1m${author}\x1b[0m`);
+    console.log('\n\x1b[93mYour support is greatly appreciated to keep development going:\x1b[0m');
+    console.log(donationText);
+    console.log('\x1b[32m' + '='.repeat(60) + '\x1b[0m\n');
+}
+
+// Display startup message and run initial version check
+(async () => {
+    await runVersionCheck();
+    displayStartupMessage();
+})();
+
+// Schedule daily version checks
+setInterval(runVersionCheck, 1000 * 60 * 60 * 24);
 
 const config = yaml.load(fs.readFileSync(path.join(__dirname, 'config.yml'), 'utf8'));
 const tmpDir = path.join(__dirname, config.tmp_folder);
